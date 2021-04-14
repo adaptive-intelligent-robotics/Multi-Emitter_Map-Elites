@@ -30,7 +30,7 @@ From: airl_lab/default/airl_env:base_ci
    exit 0 #NOTFORFINAL - the lines below this "exit" will be executed only when building the final image
    #====================================================================================================
 
-   git clone https://github.com/adaptive-intelligent-robotics/Multi-Emitter_Map-Elites.git
+   git clone https://github.com/adaptive-intelligent-robotics/Multi-Emitter_Map-Elites.git ./multi_emitter_map_elites
    
    cd ../
    ./setup.sh
