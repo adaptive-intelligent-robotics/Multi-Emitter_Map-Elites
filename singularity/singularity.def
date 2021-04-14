@@ -1,0 +1,67 @@
+Bootstrap: library
+From: airl_lab/default/airl_env:base_ci
+
+
+%labels
+    Author a.cully@imperial.ac.uk
+    Version v0.0.1
+
+%files
+    ./resources/setup.sh /git/sferes2
+    	
+%post
+   export LD_LIBRARY_PATH="/workspace/lib:$LD_LIBRARY_PATH"
+
+   # Preventing cmaes to write unecessary log files. 
+   
+   sed -i 's/if (!isNoneStr(filename))/ if(0) '/g /git/sferes2/sferes/ea/cmaes.cpp
+   sed -i '2937s/if 1/if 0/' /git/sferes2/sferes/ea/cmaes.cpp
+
+   apt-get update
+   DEBIAN_FRONTEND=noninteractive apt-get install -y  python3-matplotlib python3-numpy python3-tk python3-dev python3-pip graphviz xdg-utils
+   rm -rf /var/lib/apt/lists/*
+
+   pip3 install seaborn pandas python-gitlab graphviz imageio natsort tabulate
+
+   cd /git/sferes2/exp/
+   mkdir multi_emitter_map_elites
+
+   #====================================================================================================
+   exit 0 #NOTFORFINAL - the lines below this "exit" will be executed only when building the final image
+   #====================================================================================================
+
+   git clone https://github.com/adaptive-intelligent-robotics/Multi-Emitter_Map-Elites.git
+   
+   cd ../
+   ./setup.sh
+
+
+
+
+
+%runscript
+    #See help for indications
+    CURPATH=$(pwd)
+    cd /git/sferes2/
+    for EXP in "$@"
+    do  
+	DIRNAME=results_$EXP
+    	PATHNAME=$(date +%Y-%m-%d_%H_%M_%S)_$$
+	mkdir -p $CURPATH/$DIRNAME/
+	tmp_dir=$(mktemp -d -p $CURPATH/$DIRNAME/ $PATHNAME.XXX)
+    	build/exp/multi_emitter_map_elites/exp_$EXP -d $tmp_dir
+    done
+    
+
+
+%apprun gen_job_scripts
+    python3 /git/sferes2/exp/multi_emitter_map_elites/submodules/gitlab_notebook/gen_job_script.py "$@"
+
+%apprun analysis
+    python3 /git/sferes2/exp/multi_emitter_map_elites/python/analysis.py "$@"
+    CURPATH=$(pwd)
+    cd /git/sferes2/exp/multi_emitter_map_elites/
+    python3 ./submodules/gitlab_notebook/gen_report.py $CURPATH
+
+
+
